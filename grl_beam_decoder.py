@@ -112,7 +112,7 @@ def batch_gather(params, indices, validate_indices=None,
     return tf.gather(flat_params, indices_into_flat,validate_indices=validate_indices)
 
 
-class BeamFlattenWrapper(tf.nn.rnn_cell.RNNCell):
+class BeamFlattenWrapper(tf.contrib.rnn.RNNCell):
     def __init__(self, cell, beam_size):
         self.cell = cell
         self.beam_size = beam_size
@@ -175,7 +175,7 @@ class BeamFlattenWrapper(tf.nn.rnn_cell.RNNCell):
         return nest_map(self.prepend_beam_size, self.cell.output_size)
 
 
-class BeamReplicateWrapper(tf.nn.rnn_cell.RNNCell):
+class BeamReplicateWrapper(tf.contrib.rnn.RNNCell):
     def __init__(self, cell, beam_size):
         self.cell = cell
         self.beam_size = beam_size
@@ -270,10 +270,10 @@ class BeamSearchHelper(object):
         self.output_projection = output_projection
 
         if cell_transform == 'default':
-            if type(cell) in [tf.nn.rnn_cell.LSTMCell,
-                              tf.nn.rnn_cell.GRUCell,
-                              tf.nn.rnn_cell.BasicLSTMCell,
-                              tf.nn.rnn_cell.BasicRNNCell]:
+            if type(cell) in [tf.contrib.rnn.LSTMCell,
+                              tf.contrib.rnn.GRUCell,
+                              tf.contrib.rnn.BasicLSTMCell,
+                              tf.contrib.rnn.BasicRNNCell]:
                 cell_transform = 'flatten'
             else:
                 cell_transform = 'replicate'

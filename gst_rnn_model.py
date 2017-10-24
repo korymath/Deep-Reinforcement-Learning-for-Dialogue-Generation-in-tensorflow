@@ -18,8 +18,8 @@ class gst_model(object):
         num_layers = gst_config.num_layers
 
         with tf.name_scope("cell"):
-            single_cell = tf.nn.rnn_cell.GRUCell(self.emb_dim)
-            cells = tf.nn.rnn_cell.MultiRNNCell([single_cell] * num_layers)
+            single_cell = tf.contrib.rnn.GRUCell(self.emb_dim)
+            cells = tf.contrib.rnn.MultiRNNCell([single_cell] * num_layers)
 
         self.global_step = tf.Variable(0, trainable=False)
         self.encoder_inputs = []
@@ -70,7 +70,7 @@ class gst_model(object):
             self.outputs, self.losses, _ = st_seq2seq.model_with_buckets(self.encoder_inputs, self.decoder_inputs,
                                                                          targets, self.target_weights, self.buckets,
                                                                          lambda x, y: seq2seq_f(x, y,
-                                                                             tf.select(self.forward_only,True, False)),
+                                                                             tf.where(self.forward_only,True, False)),
                                                                          softmax_loss_function=softmax_loss_function)
 
             for b in xrange(len(self.buckets)):
