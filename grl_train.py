@@ -279,10 +279,16 @@ def train():
             encoder_inputs, decoder_inputs, target_weights, batch_source_encoder, _ = \
                 rl_model.get_batch(train_set,bucket_id)
 
-            updata, norm, step_loss = rl_model.step_rl(sess, 
-                st_model=st_model, bk_model=bk_model, encoder_inputs=encoder_inputs,
-                decoder_inputs=decoder_inputs, target_weights=target_weights,
-                batch_source_encoder=batch_source_encoder, bucket_id=bucket_id)
+            updata, norm, step_loss = rl_model.step_rl(
+                session=sess, 
+                st_model=st_model,
+                cc_model=cc_model, 
+                bk_model=bk_model, 
+                encoder_inputs=encoder_inputs,
+                decoder_inputs=decoder_inputs, 
+                target_weights=target_weights,
+                batch_source_encoder=batch_source_encoder, 
+                bucket_id=bucket_id)
 
             step_time += (time.time() - start_time) / grl_config.steps_per_checkpoint
             loss += step_loss / grl_config.steps_per_checkpoint
