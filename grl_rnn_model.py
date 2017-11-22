@@ -128,8 +128,10 @@ class grl_model(object):
             outputs = session.run(output_feed, input_feed)  # loss, states, logits
             return outputs[0], outputs[1], outputs[2:]
 
-    def step_rl(self, session, st_model, cc_model, bk_model, encoder_inputs, decoder_inputs, target_weights,
-                batch_source_encoder, bucket_id):
+    def step_rl(self, 
+        session, st_model, cc_model, 
+        bk_model, encoder_inputs, decoder_inputs, 
+        target_weights, batch_source_encoder, bucket_id):
         init_inputs = [encoder_inputs, decoder_inputs, target_weights, bucket_id]
 
         batch_mask = [1 for _ in xrange(self.batch_size)]
