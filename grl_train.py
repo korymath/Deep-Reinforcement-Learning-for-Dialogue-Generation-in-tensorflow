@@ -79,6 +79,7 @@ def prepare_data(config):
 
 
 def create_st_model(session, st_config, forward_only, name_scope):
+    print("Creating %s model with fresh parameters" % name_scope)
     with tf.variable_scope(name_or_scope=name_scope):
         st_model = gst_rnn_model.gst_model(gst_config=st_config, name_scope=name_scope, forward_only=forward_only)
         ckpt = tf.train.get_checkpoint_state(os.path.join(st_config.train_dir, "checkpoints"))
@@ -86,7 +87,6 @@ def create_st_model(session, st_config, forward_only, name_scope):
             print("Read %s model from %s" % (name_scope, ckpt.model_checkpoint_path))
             st_model.saver.restore(session, ckpt.model_checkpoint_path)
         else:
-            print("Creating %s model with fresh parameters" % name_scope)
             global_variables = [gv for gv in tf.global_variables() if name_scope in gv.name]
             session.run(tf.variables_initializer(global_variables))
             print("Created %s model with fresh parameters" % name_scope)

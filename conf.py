@@ -1,4 +1,4 @@
-__author__ = 'liuyuemaicha'
+__author__ = 'korymath'
 
 
 class GSTConfig(object):
