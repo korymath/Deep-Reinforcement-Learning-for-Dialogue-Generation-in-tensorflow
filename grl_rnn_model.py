@@ -86,7 +86,7 @@ class grl_model(object):
 
                 opt = tf.train.GradientDescentOptimizer(self.learning_rate)
                 for b in xrange(len(self.buckets)):
-                    adjusted_losses = tf.mul(self.losses[b], self.rewards[b])
+                    adjusted_losses = tf.multiply(self.losses[b], self.rewards[b])
                     gradients = tf.gradients(adjusted_losses, self.t_vars)
                     clips_gradient, norm = tf.clip_by_global_norm(gradients, max_gradient_norm)
                     self.gradient_norms.append(norm)
