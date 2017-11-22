@@ -254,9 +254,9 @@ def train():
         print("b_set length: ", len(b_set))
 
     with tf.Session() as sess:
-        st_model = create_st_model(sess, gst_config, True, gst_config.name_model)
-        bk_model = create_st_model(sess, gbk_config, True, gbk_config.name_model)
-        cc_model = create_st_model(sess, gcc_config, True, gcc_config.name_model)
+        # st_model = create_st_model(sess, gst_config, True, gst_config.name_model)
+        # bk_model = create_st_model(sess, gbk_config, True, gbk_config.name_model)
+        # cc_model = create_st_model(sess, gcc_config, True, gcc_config.name_model)
         rl_model = create_rl_model(sess, grl_config, False, grl_config.name_model)
 
         train_bucket_sizes = [len(train_set[b]) for b in xrange(len(grl_config.buckets))]
@@ -458,10 +458,10 @@ def main(_):
     # ce_standard_train(gcc_config)
 
     # model_3 P(s|a)
-    #ce_standard_train(gst_config)
+    # ce_standard_train(gst_config)
 
     # model_4.1 pre P_rl
-    #pre_rl_train(pre_grl_config)
+    # pre_rl_train(pre_grl_config)
 
     # model_4.2 P_rl
     train()

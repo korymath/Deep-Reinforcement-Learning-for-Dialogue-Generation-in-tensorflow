@@ -64,62 +64,18 @@ class grl_model(object):
 
         with tf.name_scope("GRL_Seq2Seq"):
             def seq2seq_f(encoder_inputs, decoder_inputs, forward_only):
-                # return rl_seq2seq.embedding_attention_seq2seq(encoder_inputs=encoder_inputs,
-                #                                               decoder_inputs=decoder_inputs,
-                #                                               cell= cells,
-                #                                               num_encoder_symbols=self.vocab_size,
-                #                                               num_decoder_symbols=self.vocab_size,
-                #                                               embedding_size=self.emb_dim,
-                #                                               output_projection=output_projection,
-                #                                               feed_previous=forward_only,
-                #                                               beam_size=self.beam_size,
-                #                                               dtype=dtype)
-                # return rl_seq2seq.embedding_rnn_seq2seq(encoder_inputs=encoder_inputs,
-                #                                         decoder_inputs=decoder_inputs,
-                #                                         cell=cells,
-                #                                         num_encoder_symbols=self.vocab_size,
-                #                                         num_decoder_symbols=self.vocab_size,
-                #                                         embedding_size=self.emb_dim,
-                #                                         output_projection=output_projection,
-                #                                         feed_previous=forward_only,
-                #                                         beam_search=forward_only,
-                #                                         beam_size=self.beam_size,
-                #                                         dtype=dtype)
                 return rl_seq2seq.embedding_attention_seq2seq(encoder_inputs=encoder_inputs,
-                                                              decoder_inputs=decoder_inputs,
-                                                              cell=cells,
-                                                              num_encoder_symbols=self.vocab_size,
-                                                              num_decoder_symbols=self.vocab_size,
-                                                              embedding_size=self.emb_dim,
-                                                              output_projection=output_projection,
-                                                              feed_previous=forward_only,
-                                                              # beam_search=forward_only,
-                                                              beam_size=self.beam_size,
-                                                              dtype=dtype
-                                                              )
+                    decoder_inputs=decoder_inputs, cell=cells, num_encoder_symbols=self.vocab_size,
+                    num_decoder_symbols=self.vocab_size, embedding_size=self.emb_dim, 
+                    output_projection=output_projection, feed_previous=forward_only,  
+                    beam_size=self.beam_size, dtype=dtype)
 
-        #if beam_search:
-            # self.outputs, self.losses, self.encoder_states = rl_seq2seq.decode_model_with_buckets(
-            #                                             encoder_inputs=self.encoder_inputs,
-            #                                             decoder_inputs=self.decoder_inputs, targets=targets,
-            #                                             weights=self.target_weights, buckets=self.buckets,
-            #                                             seq2seq=lambda x,y:seq2seq_f(x,y,False),
-            #                                             softmax_loss_function=softmax_loss_function)
-        # else:
-        # self.outputs, self.losses, self.encoder_states = rl_seq2seq.model_with_buckets(
-        #                                     self.encoder_inputs, self.decoder_inputs, targets,
-        #                                     self.target_weights, self.buckets,
-        #                                     # lambda x, y: seq2seq_f(x, y,False),
-        #                                     lambda x, y: seq2seq_f(x,y, tf.select(self.forward_only, True, False)),
-        #                                     softmax_loss_function=softmax_loss_function)
-
-        self.outputs, self.losses, self.encoder_states= rl_seq2seq.model_with_buckets(encoder_inputs=self.encoder_inputs,
-                                                               decoder_inputs=self.decoder_inputs,
-                                                               targets=targets,
-                                                               weights=self.target_weights,
-                                                               buckets=self.buckets,
-                                                               seq2seq=lambda x, y: seq2seq_f(x, y, tf.select(self.forward_only, True, False)),
-                                                               softmax_loss_function=softmax_loss_function)
+        (self.outputs, self.losses, 
+            self.encoder_states) = rl_seq2seq.model_with_buckets(encoder_inputs=self.encoder_inputs,
+            decoder_inputs=self.decoder_inputs, targets=targets, 
+            weights=self.target_weights, buckets=self.buckets, 
+            seq2seq=lambda x, y: seq2seq_f(x, y, tf.where(self.forward_only, True, False)), 
+            softmax_loss_function=softmax_loss_function)
         #
         #     for b in xrange(len(self.buckets)):
         #         self.outputs[b] = [

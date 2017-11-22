@@ -349,7 +349,7 @@ class BeamSearchHelper(object):
         first_in_beam_mask = tf.equal(tf.range(self.batch_size_times_beam_size) % self.beam_size, 0)
 
         beam_symbols = tf.fill([self.batch_size_times_beam_size, 0], tf.constant(self.stop_token, dtype=tf.int32))
-        beam_logprobs = tf.select(
+        beam_logprobs = tf.where(
             first_in_beam_mask,
             tf.fill([self.batch_size_times_beam_size], 0.0),
             tf.fill([self.batch_size_times_beam_size], self.INVALID_SCORE)
@@ -442,7 +442,7 @@ class BeamSearchHelper(object):
 
         logprobs_done_max = tf.reshape(logprobs_done, [-1])
 
-        cand_symbols_unpadded = tf.select(logprobs_done_max > past_cand_logprobs,
+        cand_symbols_unpadded = tf.where(logprobs_done_max > past_cand_logprobs,
                                           done_symbols,
                                           past_cand_symbols)
         cand_logprobs = tf.maximum(logprobs_done_max, past_cand_logprobs)
