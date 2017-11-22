@@ -1,8 +1,8 @@
 # Deep Reinforcement Learning for Dialogue Generation in Tensorflow
 
 ## Configuration
-TensorFlow： 0.12.0
-Python： 2.7
+TensorFlow： 1.4 (working on update)
+Python： 2.7.13
 
 ## Introduction
 Deep Reinforcement Learning for Dialogue Generation - https://arxiv.org/abs/1606.01541

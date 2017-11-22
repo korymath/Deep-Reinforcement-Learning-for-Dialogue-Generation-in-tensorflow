@@ -56,10 +56,10 @@ class grl_model(object):
                 local_w_t = tf.cast(w_t, tf.float32)
                 local_b = tf.cast(b, tf.float32)
                 local_inputs = tf.cast(inputs, tf.float32)
-                return tf.cast( tf.nn.sampled_softmax_loss(local_w_t, local_b, local_inputs, labels,
-                                                           num_samples, self.vocab_size), dtype)
-                #return tf.nn.sampled_softmax_loss(w_t, b, inputs, labels, num_samples, self.vocab_size)
-
+                return tf.cast(tf.nn.sampled_softmax_loss(weights=local_w_t, 
+                    biases=local_b, labels=labels, 
+                    inputs=local_inputs, num_sampled=num_samples, 
+                    num_classes=self.vocab_size), dtype)
             softmax_loss_function = sampled_loss
 
         with tf.name_scope("GRL_Seq2Seq"):
@@ -67,7 +67,8 @@ class grl_model(object):
                 return rl_seq2seq.embedding_attention_seq2seq(encoder_inputs=encoder_inputs,
                     decoder_inputs=decoder_inputs, cell=cells, num_encoder_symbols=self.vocab_size,
                     num_decoder_symbols=self.vocab_size, embedding_size=self.emb_dim, 
-                    output_projection=output_projection, feed_previous=forward_only,  
+                    output_projection=output_projection, feed_previous=forward_only,
+                    # beam_search=forward_only,
                     beam_size=self.beam_size, dtype=dtype)
 
         (self.outputs, self.losses, 
@@ -76,29 +77,6 @@ class grl_model(object):
             weights=self.target_weights, buckets=self.buckets, 
             seq2seq=lambda x, y: seq2seq_f(x, y, tf.where(self.forward_only, True, False)), 
             softmax_loss_function=softmax_loss_function)
-        #
-        #     for b in xrange(len(self.buckets)):
-        #         self.outputs[b] = [
-        #             tf.cond(
-        #                 self.forward_only,
-        #                 lambda: tf.matmul(output, output_projection[0]) + output_projection[1],
-        #                 lambda: output
-        #             )
-        #             for output in self.outputs[b]
-        #         ]
-
-            # if not beam_search:
-            #     self.outputs, self.losses, self.encoder_states = rl_seq2seq.model_with_buckets(self.encoder_inputs,
-            #                                         self.decoder_inputs, targets, self.target_weights, self.buckets,
-            #                                     #lambda x, y: seq2seq_f(x, y, tf.select(self.forward_only, True, False)),
-            #                                         lambda x, y: seq2seq_f(x,y, False),
-            #                                          softmax_loss_function=softmax_loss_function)
-            # else:
-            #     self.outputs, self.probs, self.encoder_states = rl_seq2seq.decode_model_with_buckets(
-            #         encoder_inputs=self.encoder_inputs, decoder_inputs=self.decoder_inputs, targets=targets,
-            #         weights=self.target_weights, buckets=self.buckets, seq2seq=lambda x,y:seq2seq_f(x,y,True),
-            #         softmax_loss_function=softmax_loss_function
-            #     )
 
         if not forward:
             with tf.name_scope("GRL_Gradient"):

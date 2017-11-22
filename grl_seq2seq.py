@@ -76,9 +76,7 @@ def rnn_decoder(decoder_inputs, initial_state, cell, loop_function=None,
 
 
 def beam_rnn_decoder(decoder_inputs, initial_state, cell, embedding,
-                     output_projection=None,
-                     beam_size=10,
-                     scope=None):
+                     output_projection=None, beam_size=10, scope=None):
     beams, probs = beam_decoder(cell, beam_size,
                                 stop_token=2,
                                 initial_state=initial_state,
@@ -185,10 +183,6 @@ def embedding_rnn_seq2seq(encoder_inputs, decoder_inputs, cell, num_encoder_symb
                                     flat_sequence=state_list)
     return outputs_and_state[:outputs_len], state
 
-
-
-
-
 def attention_decoder(decoder_inputs, initial_state, attention_states, cell,
                       output_size=None,
                       num_heads=1,
@@ -258,7 +252,7 @@ def attention_decoder(decoder_inputs, initial_state, attention_states, cell,
 
     outputs = []
     prev = None
-    batch_attn_size = array_ops.pack([batch_size, attn_size])
+    batch_attn_size = array_ops.stack([batch_size, attn_size])
     attns = [array_ops.zeros(batch_attn_size, dtype=dtype)
              for _ in xrange(num_heads)]
     for a in attns:  # Ensure the second shape of attention vectors is set.
@@ -293,6 +287,8 @@ def attention_decoder(decoder_inputs, initial_state, attention_states, cell,
         prev = output
       outputs.append(output)
 
+  # print('outputs', outputs)
+  # print('state', state)
   return outputs, state
 
 
@@ -302,7 +298,7 @@ def embedding_attention_decoder(decoder_inputs, initial_state, attention_states,
                                 feed_previous=False,
                                 update_embedding_for_previous=True,
                                 dtype=None, scope=None,
-                                initial_state_attention=False, beam_search=True, beam_size=10):
+                                initial_state_attention=False, beam_search=False, beam_size=10):
   if output_size is None:
     output_size = cell.output_size
   if output_projection is not None:
@@ -314,13 +310,13 @@ def embedding_attention_decoder(decoder_inputs, initial_state, attention_states,
     embedding = variable_scope.get_variable("embedding",
 											[num_symbols, embedding_size])
     emb_inp = [embedding_ops.embedding_lookup(embedding, i) for i in decoder_inputs]
-    if beam_search:
+    
+    # TODO(korymath): fix the beam search conditional
+    if False: #beam_search:
+      return beam_rnn_decoder(emb_inp, initial_state, cell,
+        embedding=embedding, output_projection=output_projection,
+        beam_size=beam_size, scope=scope)
 
-        return beam_rnn_decoder(emb_inp, initial_state, cell,
-                                embedding=embedding,
-                                output_projection=output_projection,
-                                beam_size=beam_size,
-                                scope=scope)
     else:
         loop_function = _extract_argmax_and_embed(embedding, output_projection,
                                                   update_embedding_for_previous) if feed_previous else None
@@ -332,7 +328,6 @@ def embedding_attention_decoder(decoder_inputs, initial_state, attention_states,
         					initial_state_attention=initial_state_attention,
         					scope=scope)
 
-
 def embedding_attention_seq2seq(encoder_inputs, decoder_inputs, cell,
                                 num_encoder_symbols, num_decoder_symbols, embedding_size,
                                 num_heads=1,
@@ -340,8 +335,8 @@ def embedding_attention_seq2seq(encoder_inputs, decoder_inputs, cell,
                                 feed_previous=False,
                                 dtype=None,
                                 scope=None,
-                                initial_state_attention=False,
-								beam_search=True,
+                                initial_state_attention=False, 
+                                beam_search=True,
                                 beam_size=10):
 
   with variable_scope.variable_scope(scope or "embedding_attention_seq2seq", dtype=dtype) as scope:
@@ -372,40 +367,43 @@ def embedding_attention_seq2seq(encoder_inputs, decoder_inputs, cell,
       											   feed_previous=feed_previous,
        											   initial_state_attention=initial_state_attention,
        											   scope=scope,
-												   beam_search=beam_search,
-                                           		   beam_size=beam_size)
+                               beam_search=beam_search,
+                               beam_size=beam_size)
       return outputs, state, encoder_state
 
     # If feed_previous is a Tensor, we construct 2 graphs and use cond.
     def decoder(feed_previous_bool):
       reuse = None if feed_previous_bool else True
-      with variable_scope.variable_scope(
-          variable_scope.get_variable_scope(), reuse=reuse) as scope:
+      with variable_scope.variable_scope(variable_scope.get_variable_scope(), reuse=reuse) as scope:
         outputs, state = embedding_attention_decoder(
-            decoder_inputs,
-            encoder_state,
-            attention_states,
-            cell,
-            num_decoder_symbols,
-            embedding_size,
-            num_heads=num_heads,
-            output_size=output_size,
-            output_projection=output_projection,
-            feed_previous=feed_previous_bool,
-            update_embedding_for_previous=False,
-            initial_state_attention=initial_state_attention,
-            scope=scope,
-			beam_search=beam_search,
-            beam_size=beam_size)
+          decoder_inputs=decoder_inputs,
+          initial_state=encoder_state,
+          attention_states=attention_states,
+          cell=cell,
+          num_symbols=num_decoder_symbols,
+          embedding_size=embedding_size,
+          num_heads=num_heads,
+          output_size=output_size,
+          output_projection=output_projection,
+          feed_previous=feed_previous_bool,
+          update_embedding_for_previous=False,
+          initial_state_attention=initial_state_attention,
+          scope=scope, 
+          beam_search=beam_search,
+          beam_size=beam_size)
+
         state_list = [state]
         if nest.is_sequence(state):
           state_list = nest.flatten(state)
+
         return outputs + state_list
 
-    outputs_and_state = control_flow_ops.cond(feed_previous,
-                                              lambda: decoder(True),
-                                              lambda: decoder(False))
-    outputs_len = len(decoder_inputs)  # Outputs length same as decoder inputs.
+    outputs_and_state = control_flow_ops.cond(feed_previous, 
+      lambda: decoder(True), 
+      lambda: decoder(False))
+    
+    # Outputs length same as decoder inputs.
+    outputs_len = len(decoder_inputs)  
     state_list = outputs_and_state[outputs_len:]
     state = state_list[0]
     if nest.is_sequence(encoder_state):
@@ -492,6 +490,7 @@ def model_with_buckets(encoder_inputs, decoder_inputs, targets, weights, buckets
           							  softmax_loss_function=softmax_loss_function))
 
   return outputs, losses, encoder_states
+
 def decode_model_with_buckets(encoder_inputs, decoder_inputs, targets, weights, buckets, seq2seq,
                               softmax_loss_function=None,
                               per_example_loss=False,
