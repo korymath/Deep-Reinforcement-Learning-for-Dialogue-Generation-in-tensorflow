@@ -22,7 +22,10 @@ from grl_beam_decoder import beam_decoder
 # TODO(ebrevdo): Remove once _linear is fully deprecated.
 # linear = rnn_cell._linear  # pylint: disable=protected-access
 
-from tensorflow.contrib.rnn.python.ops.rnn_cell import _linear
+# TODO(ebrevdo): Remove once _linear is fully deprecated.
+# linear = rnn_cell._linear  # pylint: disable=protected-access
+from tensorflow.python.ops.rnn_cell_impl import _linear
+# from tensorflow.contrib.rnn.python.ops.rnn_cell import _linear
 linear = _linear
 
 

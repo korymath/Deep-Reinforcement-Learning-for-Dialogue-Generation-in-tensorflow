@@ -45,14 +45,15 @@ class gst_model(object):
 
             def sampled_loss(inputs, labels):
                 labels = tf.reshape(labels, [-1, 1])
-                # We need to compute the sampled_softmax_loss using 32bit floats to
-                # avoid numerical instabilities.
+                # We need to compute the sampled_softmax_loss using 32bit floats to avoid numerical instabilities.
                 local_w_t = tf.cast(w_t, tf.float32)
                 local_b = tf.cast(b, tf.float32)
                 local_inputs = tf.cast(inputs, tf.float32)
+                
                 return tf.cast(
-                    tf.nn.sampled_softmax_loss(local_w_t, local_b, local_inputs, labels,
-                                               num_samples, self.vocab_size),dtype)
+                    tf.nn.sampled_softmax_loss(weights=local_w_t, biases=local_b, 
+                        labels=labels,inputs=local_inputs, num_sampled=num_samples, 
+                        num_classes=self.vocab_size), dtype)
 
             softmax_loss_function = sampled_loss
 
